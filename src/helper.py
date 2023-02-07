@@ -4,21 +4,28 @@ import re
 
 def read_input(data_path):
     """
-        Read data in and convert them to list of coordinates of reefs
+        Read data in and convert them to list of coordinates of reefs and other later needed parameters
         Args:
             data_path (string): absolute path of the input .txt file
         Return:
             (rows, cols, reefs, start, end) ((int, int, [(int, int)], (int, int), (int, int))): 
                 number of rows and columns of the map, list of reef coordinates, start point coordinate, and end point coordinate
     """
-    #TODO: handle cases when input contains repeated coordinates
     rows = 0
     cols = 0
     reefs = []
     start = (0, 0)
     end = (0, 0)
     
-    file = open(data_path, "r")
+    # Error: file not exist at data_path
+    try:
+        file = open(data_path, "r")
+    except FileNotFoundError:
+        print("File does not exist at \"" + data_path + "\"")
+        exit()
+    except Exception as e:
+        print("Invalid path!")
+        exit()
     text = file.read()
     text = text.replace("\n", "")
     coordinate_list = text.split(",")
@@ -34,6 +41,9 @@ def read_input(data_path):
         
     start = convert(filtered_coordinate_list[0])
     end = convert(filtered_coordinate_list[-1])
+    if start == end:
+    # Same start point and end point, only display end point
+        print("Start point and end point at same position! Will only display the end point!")
     filtered_coordinate_list.pop(0)
     filtered_coordinate_list.pop(-1)
     
@@ -43,11 +53,20 @@ def read_input(data_path):
             cols = x+1
         if y+1 > rows:
             rows = y+1
-        # Could handle errors of start/end point is a reef here, but considering performance, decided not
-        # This case will be handled by function find_shortest_path, which returns an empty path as a result
-        # So this case is a subset of no-path errors
+        if (x, y) == start:
+        # Error: start point at a reef
+            print("Start point at a reef!")
+            write_output(data_path, "error")
+            exit()
+        if (x, y) == end:
+            # Error: end point at a reef
+            print("End point at a reef!")
+            write_output(data_path, "error")
+            exit()
         reefs.append((x, y))
-    
+    # Handle cases when input contains repeated coordinates
+    reefs = list(set(reefs))
+
     (x_start, y_start) = start
     (x_end, y_end) = end
     if(x_start >= cols or y_start >= rows):
@@ -88,6 +107,10 @@ def convert(coordinate_text):
         Returns:
             (x, y) ((int, int)): the coordinate representation of coordinate_text
     """
+    if not valid(coordinate_text):
+    # This should never occur unless convert is used before filtering out invalid corrdinate_text
+        print("Invalid coordinate_text: " + coordinate_text)
+        exit()
     index_of_y = coordinate_text.index("y")
     x = int(coordinate_text[1:index_of_y])
     y = int(coordinate_text[index_of_y+1:])
@@ -103,26 +126,30 @@ def write_output(data_path, map):
         Return:
             success (bool): whether wrting is successful
     """
-    file = open(data_path + ".answer", "w")
+    try:
+    # Should never occur unless calling write_output before read_input being called.
+        file = open(data_path + ".answer", "w")
+    except Exception as e:
+        print("Invalid path: \"" + data_path + "\"")
+        exit()
+        
     file.write(map)
     file.close()
+    print("Write output successfully")
     return True
 
 
-def draw_map(rows, cols, reefs, start, end):
+def draw_map(rows, cols, reefs):
     """
-        Draw the 0s/1s binary map based on number of rows, number of columns, list of coordinates of reefs, start point coordinate, and end point coordinate
+        Draw the 0s/1s binary map based on number of rows, number of columns, and list of coordinates of reefs
         If start_point or end_point out of map, or either one is at a reef, return an empty map 
         Args:
             rows (int): number of rows in the map
             cols (int): number of columns in the map
             reefs ([(int, int)]): list of coordinates of reefs
-            start ((int, int)): start point coordinate
-            end ((int, int)): end point coordinate
         Return:
             binary_map ([[int]]): a binary 2d list representing the map, where 0 represents reef and 1 represents sea
     """
-    #TODO: remove start and end parameters
     binary_map = [[1 for i in range(cols)] for j in range(rows)]
     for reef in reefs:
         (x, y) = reef
@@ -185,11 +212,13 @@ def find_shortest_path(binary_map, start_point, end_point, data_path):
         end = grid.node(end_point[0], end_point[1])
     except IndexError:
     # Error: this error should never occur because of previous condition checking in function read_input
-        return[]
+        print("Start or end point out of map")
+        write_output(data_path, "error")
+        exit()
     finder = AStarFinder()
     path, runs = finder.find_path(start, end, grid)
     if path == []:
-    # Error: No path (either all roads are blocked, or start/end point is at a reef)
+    # Error: No path because all possible roads to end point are blocked
         print("No valid path!")
         write_output(data_path, "error")
         exit()
