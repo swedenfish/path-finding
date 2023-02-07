@@ -1,0 +1,48 @@
+How to run:
+
+	This work is written in python, and uses 1 external library: pathfinding. (https://pypi.org/project/pathfinding/)
+	In order to run the codes, it is expected to have python and pathfinding being installed.
+
+	Installation:
+		Versions:
+			python: 3.10.9
+			pathfinding: 1.0.1
+
+		In order to install pathfinding, run "pip install pathfinding"
+	
+	Running:
+		Go to path-finding/src
+		Run "python main.py xxxx.txt"
+			where xxxx.txt is the absolute path of the input file
+
+Choice:
+	This code uses A* algorithm as the path-finding algorithm.
+	It can be easily changed to any one of the belows by using another finder in helper.find_shortest_path function:
+		A*
+		Dijkstra
+		Best-First
+		Bi-directional A*
+		Breadth First Search (BFS)
+		Iterative Deeping A* (IDA*)
+		Minimum Spanning Tree (MSP)
+
+What I found hardest:
+	Everything goes quite well in this challange. The only part where I spend a little bit more time on is the regex filters when reading input.
+	I could have just used many if-statements (such as detecting start with 'x', and then check the later string only contains 1 'y', and then split the string to 2 parts representing x and y coordinates)
+	However, this way is not clean and elegant so I choose to use regex. But I haven't used this for a while, which costs me a little more time to find out the correct solution. 
+	(Most online solutions regarding non-negative integers are not correct because they didn't handle cases like 000 or 019)
+
+What could be improved:
+	There are still many parts in the codes which could be improved.
+
+	Firstly, it is a bit messy in the main function. Many of the functions could be wrapped up and encapsulated as inner functions.
+
+	Secondly, many things are hard-coded. For example, generate_map function changes 0 to 'x' and 1 to '.'. This will restrict the flexibility of the codes. 
+	It would be better to take those things (including the finder) as parameters so that future changes will be easier.
+
+	Thirdly, this code doesn't have a perfect performance. This is mostly due to the many if-statement checkings inside read_input function. 
+	I realized this when I did a checking for repeated elements there, which takes an extremely long time to run for path-massive.txt example.
+	To be specific, I wrote something like "if(not (x, y) in reefs): reefs.append((x, y))". This checks whether there is already a reef which has the same position.
+	And it turns out that it brings terrible time-complexity because everytime it needs to go through the list reefs. Assume there are N coordinates (x, y), it will be O(N) if we append them without checking.
+	But with this checking, it becomes O(N^2). So I later change the list reefs to a set and change it back to list to reduce the repeated elements, which is way more efficient.
+	Thus, I beileve there are still many places where efficiency can be improved.
