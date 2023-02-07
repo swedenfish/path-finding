@@ -1,5 +1,6 @@
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
+import re
 
 def read_input(data_path):
     """
@@ -10,7 +11,69 @@ def read_input(data_path):
             (rows, cols, reefs, start, end) ((int, int, [(int, int)], (int, int), (int, int))): 
                 number of rows and columns of the map, list of reef coordinates, start point coordinate, and end point coordinate
     """
-    return (0, 0, [], (0, 0), (0, 0))
+    rows = 0
+    cols = 0
+    reefs = []
+    start = (0, 0)
+    end = (0, 0)
+    
+    file = open(data_path, "r")
+    text = file.read()
+    text = text.replace("\n", "")
+    coordinate_list = text.split(",")
+    file.close()
+    
+    filtered_coordinate_list = list(filter(valid, coordinate_list))
+    
+    if(len(filtered_coordinate_list) < 2):
+        print("Too few input coordinates")
+        write_output(data_path, "error")
+        exit()
+        
+    start = convert(filtered_coordinate_list[0])
+    end = convert(filtered_coordinate_list[-1])
+    filtered_coordinate_list.pop(0)
+    filtered_coordinate_list.pop(-1)
+    
+    for reef_coordinate_text in filtered_coordinate_list:
+        (x, y) = convert(reef_coordinate_text)
+        if x > cols:
+            cols = x
+        if y > rows:
+            rows = y
+        reefs.append((x, y))
+        
+    return (rows, cols, reefs, start, end)
+
+
+def valid(coordinate_text):
+    """
+        Check whether a coordinate_text is valid
+        Valid examples: x1y1 x0y0 x1y0 x100y0 x15y28
+        Invalid examples: x-1y0 xy0 xxy0 x00y1 x100y 
+        Args:
+            coordinate_text (string): a string contains a unit of coordinate information (each unit spliting by ',')
+        Returns:
+            is_valid (bool): whether this coordinate_text is valid and should not be removed
+    """
+    # regx representing: x + any non-negative integer + y + any non-negative integer
+    pattern = re.compile("^x(0|[1-9]\d*)y(0|[1-9]\d*)$")
+    is_valid = pattern.match(coordinate_text)
+    return is_valid
+
+
+def convert(coordinate_text):
+    """
+        Convert a coordinate_text into a tuple representing the coordinates
+        Args:
+            coordinate_text (string): a string contains a unit of coordinate information (each unit spliting by ',')
+        Returns:
+            (x, y) ((int, int)): the coordinate representation of coordinate_text
+    """
+    index_of_y = coordinate_text.index("y")
+    x = int(coordinate_text[1:index_of_y])
+    y = int(coordinate_text[index_of_y+1:])
+    return (x, y)
 
 
 def write_output(data_path, map):
